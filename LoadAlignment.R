@@ -41,22 +41,26 @@ nsite = length(seqs[[1]])
 ntaxa = length(seqs)
 ngt = comma+1
 
+gtmat = matrix(ncol=nsite, nrow=ntaxa)
 for (n in 1:nsite) {
   # per site or sample?
   # gtmat = matrix(ncol=ngt, nrow=nsite)
-  gtmat = matrix(ncol=ngt, nrow=ntaxa)
   
   for (t in 1:ntaxa) {
     site <- seqs[[t]][n]
     # GT is split by , for a site 
-    gt <- as.numeric(str_split(site, ",", simplify = T))
+    gtvec <- as.numeric(str_split(site, ",", simplify = T))
+    # determine GT with highest prob 
+    gt <- which(gtvec==max(gtvec))
     
-    # gtmat[n, ] <- gt
-    gtmat[t, ] <- gt
+    # 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1;
+    stopifnot(length(gt) == 1)
+    
+    gtmat[n, t] <- gt
   }
   
   # allele frequency 
-  freq <- colSums(gtmat)
+  #freq <- colSums(gtmat)
   
 }
 
