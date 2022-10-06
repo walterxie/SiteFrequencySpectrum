@@ -1,7 +1,4 @@
-# Install b2xml
-#library("devtools")
-#devtools::install_github("walterxie/b2xml")
-#library("b2xml")
+# for Phylonco GT16 data XML
 
 setwd("~/WorkSpace/SiteFrequencySpectrum")
 require(tidyverse)
@@ -41,7 +38,13 @@ nsite = length(seqs[[1]])
 ntaxa = length(seqs)
 ngt = comma+1
 
-gtmat = matrix(ncol=nsite, nrow=ntaxa)
+GT16 = c("AA","AC","AG","AT","CA","CC","CG","CT","GA","GC","GG","GT","TA","TC","TG","TT")
+
+# last row must be healthy
+healthyID = ntaxa
+stopifnot( "healthy" == tolower(names(seqs)[healthyID]) )
+
+gtmat = matrix(nrow=ntaxa, ncol=nsite)
 for (n in 1:nsite) {
   # per site or sample?
   # gtmat = matrix(ncol=ngt, nrow=nsite)
@@ -50,19 +53,35 @@ for (n in 1:nsite) {
     site <- seqs[[t]][n]
     # GT is split by , for a site 
     gtvec <- as.numeric(str_split(site, ",", simplify = T))
+    # missing data or the character "?"
+    if ( all(gtvec== 1) ) {
+      # last row is healthy
+      stopifnot( t != healthyID )
+      gtmat[t, n] <- "?"
+      next
+    }
     # determine GT with highest prob 
     gt <- which(gtvec==max(gtvec))
     
-    # 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1;
-    stopifnot(length(gt) == 1)
+    stopifnot( !(is.null(gt) | length(gt) > 3 | length(gt) < 1) )
+    # 1 or 2
+    gtmat[t, n] <- paste0(GT16[gt], collapse = "|")
     
-    gtmat[n, t] <- gt
+    # validate healthy
+    if (t == healthyID) {
+      # must be certain
+      stopifnot( length(gt) == 1 )
+    }
   }
-  
-  # allele frequency 
-  #freq <- colSums(gtmat)
-  
 }
+# add taxa to 1st col
+gtdf <- gtmat %>% as_tibble() %>% add_column(taxa = names(seqs), .before = 1)
+print(gtdf, n =ntaxa)
+
+write_tsv(gtdf, file.path("data", "CRC09-Allele-Frequency.tsv"))
+
+
+# allele frequency 
 
 
 dat <- data.frame(gt=1:ngt, af=freq)
