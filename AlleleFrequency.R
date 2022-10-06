@@ -1,4 +1,4 @@
-# for Phylonco GT16 data XML
+# convert GT16 data in Phylonco XML into allele frequency
 
 setwd("~/WorkSpace/SiteFrequencySpectrum")
 require(tidyverse)
@@ -78,11 +78,14 @@ for (n in 1:nsite) {
 gtdf <- gtmat %>% as_tibble() %>% add_column(taxa = names(seqs), .before = 1)
 print(gtdf, n =ntaxa)
 
-write_tsv(gtdf, file.path("data", "CRC09-Allele-Frequency.tsv"))
+write_tsv(gtdf, file.path("data", "CRC09-SNPs.tsv"))
 
 
 # allele frequency 
 
+
+
+### in dev 
 
 dat <- data.frame(gt=1:ngt, af=freq)
 ggplot(dat, aes(x=factor(gt), y=af)) + 
