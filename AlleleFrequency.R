@@ -151,30 +151,36 @@ stopifnot(nrow(afdf) == nsite)
 write_tsv(afdf, file.path("data", "CRC09-allele-frequency.tsv"))
 
 ### figures
+
+require(tidyverse)
 require(ggplot2)
 
+setwd("~/WorkSpace/SiteFrequencySpectrum")
+afdf = read_tsv(file.path("data", "CRC09-allele-frequency.tsv"))
+
+ntaxa=26
 # exclude healthy
 print(ntaxa-1)
 unknowndf = afdf %>% select(unknown) %>% mutate(freq = unknown / (ntaxa-1)) 
 
 p1 <- ggplot(unknowndf, aes(freq)) + 
   geom_histogram() + 
-  xlab("Unknown allele frequency in a site") + 
+  xlab(paste("Unknown allele frequency in a site for", (ntaxa-1), "samples")) + 
   theme_bw()
 
-ggsave(p1, file.path("figures", "unknown-allele-frequency-spectrum.pdf"))
+ggsave(file.path("figures", "unknown-allele-frequency-spectrum.pdf"), p1)
 
 # minor allele frequency
-minorafdf = afdf %>% select(minorallele, count) %>% mutate(freq = count / (ntaxa-1)) 
+minorafdf = afdf %>% select(minorallele, count, unknown) %>% mutate(freq = count / (ntaxa-1-unknown)) 
 minorafdf
 unique(minorafdf %>% select(minorallele))
 
 p2 <- ggplot(minorafdf, aes(freq)) + 
   geom_histogram() + 
-  xlab("Minor allele frequency in a site") + 
+  xlab(paste("Minor allele frequency in a site for", (ntaxa-1), "samples")) + 
   theme_bw()
 
-ggsave(p2, file.path("figures", "minor-allele-frequency-spectrum.pdf"))
+ggsave(file.path("figures", "minor-allele-frequency-spectrum.pdf"), p2)
 
   
 
