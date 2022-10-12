@@ -87,14 +87,18 @@ for (n in 1:nsite) {
 # add taxa to 1st col
 gtdf <- gtmat %>% as_tibble() %>% add_column(taxa = names(seqs), .before = 1)
 print(gtdf, n =ntaxa)
+unique(gtdf)
 
 write_tsv(gtdf, file.path("data", "CRC09-SNPs-unphased.tsv"))
 
 ### minor allele frequency 
+### slow
+
 # rm healthy
 gtm <- gtdf %>% filter(row_number()!=healthyID)
 print(gtm[,1], n=26)
-
+unique(unlist(apply(gtm[,-1], 2, unique)))
+       
 afdf = NULL
 # 24,385 sites
 for (n in 1:nsite) {
@@ -145,10 +149,12 @@ for (n in 1:nsite) {
     print(afdf %>% slice(n())) 
   }
 }
+### slow end
 afdf
 stopifnot(nrow(afdf) == nsite)
 
 write_tsv(afdf, file.path("data", "CRC09-allele-frequency.tsv"))
+
 
 ### figures
 
