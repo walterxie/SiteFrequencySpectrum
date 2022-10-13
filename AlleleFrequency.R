@@ -147,7 +147,6 @@ sort(unique(mac.df[[2]]))
 # mac.df %>% filter(count == 22)
 
 # plot 
-
 ntaxa=26
 # exclude healthy
 print(ntaxa-1)
@@ -162,7 +161,7 @@ ggsave(file.path("figures", "minor-allele-count-spectrum.pdf"), p3)
 
 
 
-### method 1 : slow
+### method 1 : too slow
 
 # rm healthy
 gtm <- gtdf %>% filter(row_number()!=healthyID)
