@@ -144,15 +144,19 @@ unique(mac.df[[1]])
 mac.df[[2]] = as.numeric(mac.df[[2]])
 # counts
 sort(unique(mac.df[[2]]))
-# mac.df %>% filter(count == 22)
+# mac.df %>% filter(count == 16)
+# which(mac.df$count == 16)
+# snps[["V807"]] %>% tibble::as_tibble() %>% dplyr::count(value, sort = TRUE)
+# gtdf[[807]][healthyID]
 
 # plot 
 ntaxa=26
 # exclude healthy
 print(ntaxa-1)
 
-p3 <- ggplot(mac.df, aes(as.numeric(count))) + 
-  geom_histogram() + 
+p3 <- ggplot(mac.df, aes(count)) + 
+  geom_histogram(stat = 'count') + 
+  scale_x_continuous(breaks = sort(unique(mac.df[["count"]]))) +
   xlab(paste("Minor allele count in a site for", (ntaxa-1), "samples")) + 
   theme_bw()
 
