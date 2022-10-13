@@ -100,11 +100,11 @@ snps <- gtdf %>% filter(row_number()!=healthyID)
 print(snps[,1], n=26)
 unique(unlist(apply(snps[,-1], 2, unique)))
 
-### method 2 : only count certain minor allele
+### method 2 : sum the minimum counts
 # e.g. CC=14, ?=8, CG=2, GG=2, then MA=2+2
 
-# by column name (V1, V2, ...)
-countMinorAlleleCertain <- function(snpv=c()) {
+# by column
+countMinorAlleleSumMin <- function(snpv=c()) {
   require(tidyverse)
   af = snpv %>% tibble::as_tibble() %>% dplyr::count(value, sort = TRUE)
   # all discovered allele counts
@@ -121,23 +121,23 @@ countMinorAlleleCertain <- function(snpv=c()) {
   return( c(paste0(minaf[["value"]], collapse = "/"), 
             sum(minaf[["n"]])) )
 }
-names(snps[,-1])[1:10]
-# countMinorAlleleCertain(snps[["V1"]])
-mac = lapply(snps[,-1], countMinorAlleleCertain)
+names(gtdf[,-1])[1:10]
+# countMinorAlleleSumMin(gtdf[["V1"]])
+mac = lapply(gtdf[,-1], countMinorAlleleSumMin)
 mac[1:3]
-stopifnot(length(mac)==ncol(snps)-1)
+stopifnot(length(mac)==ncol(gtdf)-1)
 
 mac.df <- as_tibble(mac) %>% as.matrix %>% t %>% as_tibble
 names(mac.df) = c("minorallele","count")
 
-write_tsv(mac.df, file.path("data", "CRC09-minor-allele-count.tsv"))
+write_tsv(mac.df, file.path("data", "CRC09-minor-allele-count-with-healthy.tsv"))
 
 ### re-load saved data 
 require(tidyverse)
 require(ggplot2)
 
 setwd("~/WorkSpace/SiteFrequencySpectrum")
-mac.df = read_tsv(file.path("data", "CRC09-minor-allele-count.tsv"))
+mac.df = read_tsv(file.path("data", "CRC09-minor-allele-count-with-healthy.tsv"))
 
 # summary 
 unique(mac.df[[1]])
@@ -154,17 +154,67 @@ sort(unique(mac.df[[2]]))
 # plot 
 ntaxa=26
 # exclude healthy
-print(ntaxa-1)
+print(ntaxa)
 
 mac.df[["count"]] = as.numeric(mac.df[["count"]])
-p3 <- ggplot(mac.df, aes(count)) + 
+p3 <- ggplot(mac.df %>% filter(count > 0), aes(count)) + 
   geom_histogram(stat = 'count') + 
   scale_x_continuous(breaks = sort(unique(mac.df[["count"]]))) +
-  xlab(paste("Minor allele count in a site for", (ntaxa-1), "samples")) + 
+  xlab(paste("Minor allele count in a site for", (ntaxa), "samples")) + 
   theme_bw()
 
-ggsave(file.path("figures", "minor-allele-count-spectrum.pdf"), p3)
+ggsave(file.path("figures", "minor-allele-count-spectrum-with-healthy.pdf"), p3)
 
+### method 3 : rm ? and 1 of maximun count(s), and then sum the rest 
+
+countMinorAlleleSumTheRest <- function(snpv=c()) {
+  require(tidyverse)
+  af = snpv %>% tibble::as_tibble() %>% dplyr::count(value, sort = TRUE)
+  # all discovered allele counts
+  nounk = af %>% filter(value != "?") 
+  # after rm "?", 
+  if (nrow(nounk) <= 1) {
+    # uncertain minor alleles
+    # e.g. AA=8,AG=8,GG=8, or only 1 or no GT left
+    return(c("", 0))
+  }
+  
+  # rm max
+  maxid = which(nounk$n == max(nounk$n))
+  # if max==min
+  if (length(maxid) >= 1) {
+    # try to rm 1 of max
+    minaf = nounk[-maxid[1],]
+    # sum all min(n)
+    return( c(paste0(minaf[["value"]], collapse = "/"), 
+              sum(minaf[["n"]])) )
+  } else {
+    return(c("", 0))
+  }
+}
+# with healthy
+# countMinorAlleleSumTheRest(gtdf[["V1"]])
+mac = lapply(gtdf[,-1], countMinorAlleleSumTheRest)
+mac[1:3]
+stopifnot(length(mac)==ncol(gtdf)-1)
+
+mac.df <- as_tibble(mac) %>% as.matrix %>% t %>% as_tibble
+names(mac.df) = c("minorallele","count")
+
+write_tsv(mac.df, file.path("data", "CRC09-minor-allele-sum-rest-with-healthy.tsv"))
+
+unique(mac.df[[1]])
+sort(unique(mac.df[[2]]))
+
+mac.df[["count"]] = as.numeric(mac.df[["count"]])
+p4 <- ggplot(mac.df %>% filter(count > 0), aes(count)) + 
+  geom_histogram(stat = 'count') + 
+  scale_x_continuous(breaks = sort(unique(mac.df[["count"]]))) +
+  xlab(paste("Minor allele count in a site for", (ntaxa), "samples")) + 
+  theme_bw()
+p4
+
+ggsave(file.path("figures", "minor-allele-sum-rest-with-healthy.pdf"), p4)
 
 
 
