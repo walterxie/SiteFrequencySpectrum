@@ -87,12 +87,82 @@ for (n in 1:nsite) {
 # add taxa to 1st col
 gtdf <- gtmat %>% as_tibble() %>% add_column(taxa = names(seqs), .before = 1)
 print(gtdf, n =ntaxa)
-unique(gtdf)
+gtdf %>% count(V1, sort = TRUE)
+stringr::str_count(gtdf[[2]])
 
 write_tsv(gtdf, file.path("data", "CRC09-SNPs-unphased.tsv"))
 
 ### minor allele frequency 
-### slow
+
+# rm healthy
+snps <- gtdf %>% filter(row_number()!=healthyID)
+# 25 × 24,386
+print(snps[,1], n=26)
+unique(unlist(apply(snps[,-1], 2, unique)))
+
+### method 2 : only count certain minor allele
+# e.g. CC=14, ?=8, CG=2, GG=2, then MA=2+2
+
+# by column name (V1, V2, ...)
+countMinorAlleleCertain <- function(snpv=c()) {
+  require(tidyverse)
+  af = snpv %>% tibble::as_tibble() %>% dplyr::count(value, sort = TRUE)
+  # all discovered allele counts
+  minaf = af %>% filter(value != "?") 
+  # after rm "?"
+  if (nrow(minaf) <= 1 || min(minaf$n)==max(minaf$n)) {
+    # uncertain minor alleles
+    # e.g. AA=8,AG=8,GG=8, or only 1 or no GT left
+    return(c(paste0(minaf[["value"]], collapse = "/"), 0))
+  }
+  # take all min(n)
+  minaf = minaf %>% filter(n == min(n))
+  # sum all min(n)
+  return( c(paste0(minaf[["value"]], collapse = "/"), 
+            sum(minaf[["n"]])) )
+}
+names(snps[,-1])[1:10]
+# countMinorAlleleCertain(snps[["V1"]])
+mac = lapply(snps[,-1], countMinorAlleleCertain)
+mac[1:3]
+stopifnot(length(mac)==ncol(snps)-1)
+
+mac.df <- as_tibble(mac) %>% as.matrix %>% t %>% as_tibble
+names(mac.df) = c("minorallele","count")
+
+write_tsv(mac.df, file.path("data", "CRC09-minor-allele-count.tsv"))
+
+### re-load saved data 
+require(tidyverse)
+require(ggplot2)
+
+setwd("~/WorkSpace/SiteFrequencySpectrum")
+mac.df = read_tsv(file.path("data", "CRC09-minor-allele-count.tsv"))
+
+# summary 
+unique(mac.df[[1]])
+mac.df[[2]] = as.numeric(mac.df[[2]])
+# counts
+sort(unique(mac.df[[2]]))
+# mac.df %>% filter(count == 22)
+
+# plot 
+
+ntaxa=26
+# exclude healthy
+print(ntaxa-1)
+
+p3 <- ggplot(mac.df, aes(as.numeric(count))) + 
+  geom_histogram() + 
+  xlab(paste("Minor allele count in a site for", (ntaxa-1), "samples")) + 
+  theme_bw()
+
+ggsave(file.path("figures", "minor-allele-count-spectrum.pdf"), p3)
+
+
+
+
+### method 1 : slow
 
 # rm healthy
 gtm <- gtdf %>% filter(row_number()!=healthyID)
