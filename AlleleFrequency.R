@@ -147,13 +147,16 @@ sort(unique(mac.df[[2]]))
 # mac.df %>% filter(count == 16)
 # which(mac.df$count == 16)
 # snps[["V807"]] %>% tibble::as_tibble() %>% dplyr::count(value, sort = TRUE)
-# gtdf[[807]][healthyID]
+# gtdf[[807+1]][healthyID] # id+1
+# mac.df[807,]
+# problems, site: 5, 807, 2578
 
 # plot 
 ntaxa=26
 # exclude healthy
 print(ntaxa-1)
 
+mac.df[["count"]] = as.numeric(mac.df[["count"]])
 p3 <- ggplot(mac.df, aes(count)) + 
   geom_histogram(stat = 'count') + 
   scale_x_continuous(breaks = sort(unique(mac.df[["count"]]))) +
