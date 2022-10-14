@@ -34,7 +34,7 @@ xmlToSequences <- function(xml.path) {
 }
 
 # return a probability matrix for one site, rows are taxa, columns are GT 
-getOneSiteProb <- function(siteID = 1, seqs=list()) {
+getOneSiteProbUnphased <- function(siteID = 1, seqs=list()) {
   site <- sapply(seqs, `[`, siteID)
   # 1 site
   gtvec <- as.numeric(str_split(site, ",", simplify = T))
@@ -43,7 +43,27 @@ getOneSiteProb <- function(siteID = 1, seqs=list()) {
   rownames(gtm) = names(site)    
   
   # convert to probability
-  return(prop.table(gtm, 1))
+  probPhased = prop.table(gtm, 1)
+  # sapply(GT16, function(x){which(GT16unphased %in% x)})
+  
+  # convert to unphased
+  # AA
+  probUnphased = matrix(probPhased[,1], nrow=nrow(probPhased), ncol=1)
+  # AC
+  probUnphased = cbind(probUnphased, rowSums(probPhased[,c(2,5)]))
+  probUnphased = cbind(probUnphased, rowSums(probPhased[,c(3,9)]))
+  probUnphased = cbind(probUnphased, rowSums(probPhased[,c(4,13)]))
+  # CC
+  probUnphased = cbind(probUnphased, probPhased[,6])
+  probUnphased = cbind(probUnphased, rowSums(probPhased[,c(7,10)]))
+  probUnphased = cbind(probUnphased, rowSums(probPhased[,c(8,14)]))
+  # GG
+  probUnphased = cbind(probUnphased, probPhased[,11])
+  probUnphased = cbind(probUnphased, rowSums(probPhased[,c(12,15)]))
+  # TT
+  probUnphased = cbind(probUnphased, probPhased[,16])
+  
+  return(probUnphased)
 }
 
 

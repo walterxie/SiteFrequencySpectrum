@@ -14,7 +14,7 @@ ntaxa = length(seqs)
 
 # the number of data per site having prob >= 0.5
 getNConfPerSite <- function(siteID = 1, seqs=list()) {
-  site <- getOneSiteProb(siteID, seqs) 
+  site <- getOneSiteProbUnphased(siteID, seqs) 
   enoughPr = apply(site, 1, function(x){max(x) >= 0.5})
   # count TRUE
   return(sum(enoughPr))
