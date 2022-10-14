@@ -30,3 +30,19 @@ p1 <- ggplot() + aes(nT)+ geom_histogram(binwidth=1, colour="black", fill="white
   theme_bw()
 
 ggsave(file.path("figures", "count-spectrum-sample-prob-0.5.pdf"), p1)
+
+
+getMaxProbPerSite <- function(siteID = 1, seqs=list()) {
+  site <- getOneSiteProbUnphased(siteID, seqs) 
+  maxP = apply(site, 1, function(x){max(x)})
+  return(maxP)
+}
+
+maxPr = lapply(1:nsite, getMaxProbPerSite, seqs)
+
+frac = sapply(maxPr, function(x){ length(x[x>=0.5]) / length(x) })
+
+p2 <- ggplot() + aes(frac)+ geom_histogram(colour="black", fill="white") +
+  xlab(paste("The spectrum of fraction of #samples (with GT Pr >= 0.5) in a site, total samples = ", ntaxa)) + 
+  theme_bw()
+ggsave(file.path("figures", "fraction-spectrum-sample-prob-0.5.pdf"), p2)
